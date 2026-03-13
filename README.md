@@ -1,9 +1,10 @@
 # Monad Validator Manager
 
-[![Latest Release](https://img.shields.io/github/v/release/MictoNode/monad-val-manager)](https://github.com/MictoNode/monad-val-manager/releases)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](LICENSE-MIT)
-[![Rust](https://img.shields.io/badge/rust-1.93%2B-orange)](https://www.rust-lang.org)
-[![Build](https://img.shields.io/github/actions/workflow/status/MictoNode/monad-val-manager/ci.yml)](https://github.com/MictoNode/monad-val-manager/actions)
+<p align="center">
+  <a href="https://github.com/MictoNode/monad-val-manager/releases"><img src="https://img.shields.io/github/v/release/MictoNode/monad-val-manager" alt="Latest Release"></a>
+  <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust"></a>
+</p>
 
 <p align="center">
   <strong>Professional CLI and TUI tool for Monad blockchain validator node management</strong>
