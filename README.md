@@ -156,7 +156,7 @@ monad-val-manager --help
 
 After initialization, your config is stored at:
 
-| Linux | `~/.config/monad-val-manager/config.toml` |
+Your config is stored at `~/.config/monad-val-manager/config.toml`
 
 No manual configuration is needed to get started - just run the tool!
 
