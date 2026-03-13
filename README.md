@@ -156,11 +156,7 @@ monad-val-manager --help
 
 After initialization, your config is stored at:
 
-| Platform | Config Location |
-|----------|-----------------|
 | Linux | `~/.config/monad-val-manager/config.toml` |
-| macOS | `~/Library/Application Support/monad-val-manager/config.toml` |
-| Windows | `%APPDATA%\monad-val-manager\config.toml` |
 
 No manual configuration is needed to get started - just run the tool!
 
