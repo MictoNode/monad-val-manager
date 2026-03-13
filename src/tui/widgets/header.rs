@@ -36,7 +36,7 @@ impl<'a> HeaderWidget<'a> {
         let network_style = self.get_network_style();
 
         let content = Line::from(vec![
-            Span::styled(" MonadNode Manager ", THEME.header()),
+            Span::styled(" Monad Val Manager ", THEME.header()),
             Span::raw("|"),
             Span::styled(
                 format!(" {} ", self.validator.network_name.to_uppercase()),

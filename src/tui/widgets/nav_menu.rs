@@ -88,7 +88,7 @@ impl NavMenuWidget {
     /// Render the branding section
     fn render_branding(&self, frame: &mut Frame, area: Rect) {
         let content = Line::from(vec![Span::styled(
-            " MonadNode Manager ",
+            " Monad Val Manager ",
             crate::tui::theme::THEME.header(),
         )]);
 
