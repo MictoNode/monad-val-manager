@@ -1,0 +1,59 @@
+# Monad Validator Manager Configuration
+# Copy this file to ~/.config/monad-val-manager/config.toml (Linux/macOS)
+# or %APPDATA%\monad-val-manager\config.toml (Windows)
+
+[network]
+# Network type: "mainnet" or "testnet"
+type = "mainnet"
+# Chain ID: 143 for mainnet, 10143 for testnet
+chain_id = 143
+
+[rpc]
+# RPC endpoint URL
+http_url = "http://localhost:8080"
+# WebSocket endpoint URL
+ws_url = "ws://localhost:8080"
+# Prometheus metrics URL
+metrics_url = "http://localhost:8889/metrics"
+# Request timeout in seconds
+timeout = 30
+# Maximum retries
+max_retries = 3
+
+[staking]
+# =================================================================
+# SIGNER TYPE SELECTION
+# =================================================================
+# Choose ONE signer type. This determines how transactions are signed.
+
+# Option 1: Local Signer (private key in memory)
+# - Private key stored in environment variable
+# - Faster, convenient for development/testing
+# - NOT recommended for production (security risk)
+type = "local"
+
+# Option 2: Ledger Hardware Wallet (RECOMMENDED FOR PRODUCTION)
+# - Private key never leaves the device
+# - Requires Ledger Nano S/X connected via USB
+# - Each transaction requires physical confirmation on device
+# - Enable "Blind Signing" in Ledger Ethereum app
+# type = "ledger"
+
+# =================================================================
+# DERIVATION PATH (only for Ledger)
+# =================================================================
+# BIP-32 derivation path for Ledger hardware wallet
+# Only used when type = "ledger" above
+# Default Ethereum path: "44'/60'/0'/0/0"
+derivation_path = "44'/60'/0'/0/0"
+
+###
+### Environment Variables (override config file values)
+###
+### STAKING_TYPE: "local" or "ledger"
+### DERIVATION_PATH: BIP-32 derivation path for Ledger
+###
+### Example:
+### export STAKING_TYPE=ledger
+### export DERIVATION_PATH="44'/60'/0'/0/0"
+###

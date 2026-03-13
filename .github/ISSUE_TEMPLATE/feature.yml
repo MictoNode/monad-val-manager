@@ -1,0 +1,78 @@
+name: Feature Request
+description: Suggest an idea for Monad Validator Manager
+title: '[FEATURE] '
+labels: ['enhancement']
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this feature solve? What use case does it address?
+      placeholder: |
+        As a validator operator, I want to ...
+        This will help me ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Clear and concise description of what you want to happen
+      placeholder: |
+        Add a new command `monad-val-manager stake redelegate` that ...
+        Or add a new TUI screen for monitoring rewards history
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which component would this affect?
+      options:
+        - CLI
+        - TUI
+        - Staking Operations
+        - Doctor Diagnostics
+        - Configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: |
+        I'm currently using ...
+        I've tried ...
+
+  - type: textarea
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      placeholder: |
+        - Critical: Blocks my workflow
+        - High: Would greatly improve my experience
+        - Medium: Nice to have
+        - Low: Minor improvement
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other relevant information, screenshots, or examples
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Before submitting
+      options:
+        - label: I have searched existing issues for similar features
+          required: true
+        - label: This feature is aligned with the project's scope
+          required: true

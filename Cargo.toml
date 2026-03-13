@@ -1,0 +1,137 @@
+[package]
+name = "monad-val-manager"
+version = "1.0.0"
+edition = "2021"
+authors = ["MictoNode"]
+description = "Professional CLI tool for Monad blockchain validator management"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/MictoNode/monad-val-manager"
+readme = "README.md"
+keywords = ["monad", "blockchain", "validator", "node", "cli"]
+categories = ["command-line-utilities", "cryptography::cryptocurrencies"]
+
+[features]
+default = ["ledger"]
+ledger = ["alloy-signer-ledger", "coins-ledger"]
+
+[dependencies]
+# CLI - Command line argument parsing
+clap = { version = "4.5", features = ["derive", "env", "color", "suggestions"] }
+
+# TUI - Terminal User Interface
+ratatui = "0.30"
+crossterm = { version = "0.28", features = ["event-stream"] }
+
+# Enchanted TUI libraries
+tachyonfx = "0.1"                     # Shader-like effects for gradients, glow, transitions
+tui-big-text = "0.7"                  # Giant ASCII text headers for MONAD logo
+ratatui-macros = "0.7"                # Less boilerplate code
+ratatui-toaster = "0.1"               # Toast notifications (Discord/Slack-like)
+throbber-widgets-tui = "0.3"          # Animated loading spinners
+tui-piechart = "0.2"                  # Pie charts for Perf screen
+
+# Async Runtime
+tokio = { version = "1.42", features = ["full"] }
+
+# HTTP Client for RPC
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+
+# System Information
+sysinfo = "0.33"
+
+# Configuration
+config = "0.15"
+toml = "0.8"
+directories = "5.0"
+dotenvy = "0.15"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Error Handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# Crypto (for staking transaction signing)
+k256 = { version = "0.13", features = ["ecdsa", "arithmetic"] }
+blake3 = "1.5"
+blst = "0.3"
+rlp = "0.6"
+sha3 = "0.10"
+
+# Alloy - Ethereum libraries (modern transaction signing)
+# Downgraded to 0.6 for alloy-signer-ledger compatibility
+# Note: All features used by Monad (EIP-1559) are available in 0.6
+alloy = { version = "0.6", features = ["full"] }
+alloy-consensus = { version = "0.6" }
+alloy-eips = { version = "0.6" }
+alloy-primitives = { version = "0.8" }
+alloy-signer = { version = "0.6" }
+alloy-signer-local = { version = "0.6" }
+alloy-signer-ledger = { version = "0.6", optional = true }
+coins-ledger = { version = "0.12", optional = true }
+
+# Hardware wallet support (Ledger)
+# Optional: only compiled when "ledger" feature is enabled
+# Using alloy-signer-ledger (modern, stable, part of Alloy ecosystem)
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Async utilities
+futures = "0.3"
+tokio-stream = "0.1"
+async-trait = "0.1"
+
+# URL parsing
+url = "2.5"
+
+# Hex encoding/decoding (for ABI encoding)
+hex = "0.4"
+
+# Terminal colors
+colored = "2.1"
+
+# Clipboard access for TUI
+arboard = "3.0"
+
+# Textarea widget for TUI input fields (ratatui-native fork for 0.30 compatibility)
+ratatui-textarea = "*"
+
+# Progress bars and spinners
+indicatif = "0.17"
+
+# Password input (hidden terminal input)
+rpassword = "7"
+num_cpus = "1.17.0"
+
+[dev-dependencies]
+# Testing
+tokio-test = "0.4"
+mockall = "0.13"
+tempfile = "3.14"
+assert_cmd = "2.0"
+predicates = "3.1"
+wiremock = "0.6"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+[[bin]]
+name = "monad-val-manager"
+path = "src/main.rs"
+
+[lib]
+name = "monad_val_manager"
+path = "src/lib.rs"
