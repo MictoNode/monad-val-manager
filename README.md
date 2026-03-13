@@ -1,9 +1,10 @@
 # Monad Validator Manager
 
-[![Latest Release](https://img.shields.io/github/v/release/MictoNode/monad-val-manager)](https://github.com/MictoNode/monad-val-manager/releases)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue)](LICENSE-MIT)
-[![Rust](https://img.shields.io/badge/rust-1.93%2B-orange)](https://www.rust-lang.org)
-[![Build](https://img.shields.io/github/actions/workflow/status/MictoNode/monad-val-manager/ci.yml)](https://github.com/MictoNode/monad-val-manager/actions)
+<p align="center">
+  <a href="https://github.com/MictoNode/monad-val-manager/releases"><img src="https://img.shields.io/github/v/release/MictoNode/monad-val-manager" alt="Latest Release"></a>
+  <a href="LICENSE-MIT"><img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-blue" alt="License"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.93%2B-orange" alt="Rust"></a>
+</p>
 
 <p align="center">
   <strong>Professional CLI and TUI tool for Monad blockchain validator node management</strong>
@@ -44,30 +45,19 @@
 
 Download the latest release for your platform from the [Releases page](https://github.com/MictoNode/monad-val-manager/releases):
 
-| Platform | Architecture | Download |
-|----------|-------------|----------|
-| Linux | x86_64 (AMD64) | `monad-val-manager-linux-amd64.tar.gz` |
-| Linux | ARM64 | `monad-val-manager-linux-arm64.tar.gz` |
-| macOS | Intel (AMD64) | `monad-val-manager-macos-amd64.tar.gz` |
-| macOS | Apple Silicon (ARM64) | `monad-val-manager-macos-arm64.tar.gz` |
-| Windows | x86_64 | `monad-val-manager-windows-amd64.zip` |
-
-#### Linux / macOS
+#### Linux
 
 ```bash
-# 1. Download the binary (example for Linux AMD64)
-wget https://github.com/MictoNode/monad-val-manager/releases/latest/download/monad-val-manager-linux-amd64.tar.gz
+# 1. Download the binary
+wget https://github.com/MictoNode/monad-val-manager/releases/latest/download/monad-val-manager
 
-# 2. Extract the archive
-tar -xzf monad-val-manager-linux-amd64.tar.gz
-
-# 3. Make it executable
+# 2. Make it executable
 chmod +x monad-val-manager
 
-# 4. Move to a directory in your PATH (optional)
+# 3. Move to a directory in your PATH (optional)
 sudo mv monad-val-manager /usr/local/bin/
 
-# 5. Verify installation
+# 4. Verify installation
 monad-val-manager --version
 ```
 
@@ -77,7 +67,7 @@ Each release includes SHA256 checksums. Verify your download:
 
 ```bash
 # Check the SHA256 hash
-sha256sum monad-val-manager-linux-amd64.tar.gz
+sha256sum monad-val-manager
 
 # Compare with the hash shown on the Releases page
 ```
@@ -167,11 +157,7 @@ monad-val-manager --help
 
 After initialization, your config is stored at:
 
-| Platform | Config Location |
-|----------|-----------------|
-| Linux | `~/.config/monad-val-manager/config.toml` |
-| macOS | `~/Library/Application Support/monad-val-manager/config.toml` |
-| Windows | `%APPDATA%\monad-val-manager\config.toml` |
+Your config is stored at `~/.config/monad-val-manager/config.toml`
 
 No manual configuration is needed to get started - just run the tool!
 
