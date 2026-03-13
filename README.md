@@ -44,30 +44,19 @@
 
 Download the latest release for your platform from the [Releases page](https://github.com/MictoNode/monad-val-manager/releases):
 
-| Platform | Architecture | Download |
-|----------|-------------|----------|
-| Linux | x86_64 (AMD64) | `monad-val-manager-linux-amd64.tar.gz` |
-| Linux | ARM64 | `monad-val-manager-linux-arm64.tar.gz` |
-| macOS | Intel (AMD64) | `monad-val-manager-macos-amd64.tar.gz` |
-| macOS | Apple Silicon (ARM64) | `monad-val-manager-macos-arm64.tar.gz` |
-| Windows | x86_64 | `monad-val-manager-windows-amd64.zip` |
-
-#### Linux / macOS
+#### Linux
 
 ```bash
-# 1. Download the binary (example for Linux AMD64)
-wget https://github.com/MictoNode/monad-val-manager/releases/latest/download/monad-val-manager-linux-amd64.tar.gz
+# 1. Download the binary
+wget https://github.com/MictoNode/monad-val-manager/releases/latest/download/monad-val-manager
 
-# 2. Extract the archive
-tar -xzf monad-val-manager-linux-amd64.tar.gz
-
-# 3. Make it executable
+# 2. Make it executable
 chmod +x monad-val-manager
 
-# 4. Move to a directory in your PATH (optional)
+# 3. Move to a directory in your PATH (optional)
 sudo mv monad-val-manager /usr/local/bin/
 
-# 5. Verify installation
+# 4. Verify installation
 monad-val-manager --version
 ```
 
@@ -77,7 +66,7 @@ Each release includes SHA256 checksums. Verify your download:
 
 ```bash
 # Check the SHA256 hash
-sha256sum monad-val-manager-linux-amd64.tar.gz
+sha256sum monad-val-manager
 
 # Compare with the hash shown on the Releases page
 ```
