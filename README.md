@@ -80,6 +80,12 @@ sha256sum monad-val-manager
 #### Prerequisites
 
 - **Rust 1.93+** - Install via [rustup](https://rustup.rs/)
+- **System packages** - `alloy` pulls `reqwest` with default features, which links
+  `openssl-sys`, so the OpenSSL development headers and `pkg-config` are required:
+
+```bash
+sudo apt-get install -y pkg-config libssl-dev
+```
 
 ```bash
 # Install Rust (if not already installed)
