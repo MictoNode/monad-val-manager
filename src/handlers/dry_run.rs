@@ -310,202 +310,95 @@ pub async fn execute_dry_run_add_validator(
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::staking::encode_delegate;
+    use crate::staking::signer::LocalSigner;
+    use wiremock::matchers::{body_string_contains, method};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
-    /// Verify that dry-run delegate doesn't broadcast transaction
+    const TEST_KEY: &str = "0000000000000000000000000000000000000000000000000000000000000001";
+    const TESTNET_CHAIN_ID: u64 = 10143;
+    const ONE_MON: u128 = 1_000_000_000_000_000_000;
+
+    fn json_rpc_success<T: serde::Serialize>(result: T) -> String {
+        serde_json::json!({ "jsonrpc": "2.0", "id": 1, "result": result }).to_string()
+    }
+
+    /// Mount only the reads a dry-run needs. Nothing else is mounted, so any
+    /// attempt to broadcast would fail the request and surface as an Err.
+    async fn mock_reads(server: &MockServer, nonce: u64) {
+        for (rpc_method, result) in [
+            ("eth_chainId", format!("0x{:x}", TESTNET_CHAIN_ID)),
+            ("eth_getTransactionCount", format!("0x{:x}", nonce)),
+        ] {
+            Mock::given(method("POST"))
+                .and(body_string_contains(format!(
+                    "\"method\":\"{}\"",
+                    rpc_method
+                )))
+                .respond_with(
+                    ResponseTemplate::new(200)
+                        .set_body_string(json_rpc_success(result))
+                        .insert_header("Content-Type", "application/json"),
+                )
+                .mount(server)
+                .await;
+        }
+    }
+
+    /// The preview must describe exactly the operation the caller asked for.
     #[tokio::test]
-    async fn test_dry_run_delegate_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
+    async fn build_unsigned_transaction_matches_requested_operation() {
+        let server = MockServer::start().await;
+        mock_reads(&server, 7).await;
+
+        let signer = LocalSigner::from_private_key(TEST_KEY).expect("Valid key");
+        let client = RpcClient::new(&server.uri()).expect("Valid endpoint");
+        let calldata = encode_delegate(224).expect("Valid calldata");
+
+        let tx = build_unsigned_transaction(&client, &signer, &calldata, ONE_MON)
+            .await
+            .expect("Dry-run needs nothing beyond reads");
+
+        assert_eq!(tx.chain_id, TESTNET_CHAIN_ID);
+        assert_eq!(tx.nonce, 7);
+        assert_eq!(tx.gas_limit, STAKING_GAS_LIMIT);
+        assert_eq!(tx.value, ONE_MON);
+        assert_eq!(tx.to, STAKING_CONTRACT_ADDRESS);
+        assert_eq!(hex::encode(&tx.data), calldata.trim_start_matches("0x"));
     }
 
-    /// Verify that dry-run undelegate doesn't broadcast transaction
+    /// The whole point of dry-run: it must never reach the network.
     #[tokio::test]
-    async fn test_dry_run_undelegate_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
+    async fn dry_run_delegate_only_reads_and_never_broadcasts() {
+        let server = MockServer::start().await;
+        mock_reads(&server, 0).await;
 
-    /// Verify that dry-run withdraw doesn't broadcast transaction
-    #[tokio::test]
-    async fn test_dry_run_withdraw_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
+        let signer = LocalSigner::from_private_key(TEST_KEY).expect("Valid key");
+        let client = RpcClient::new(&server.uri()).expect("Valid endpoint");
 
-    /// Verify that dry-run claim rewards doesn't broadcast transaction
-    #[tokio::test]
-    async fn test_dry_run_claim_rewards_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
+        execute_dry_run_delegate(&client, &signer, 224, ONE_MON, "1", None)
+            .await
+            .expect("Dry-run must succeed without broadcasting");
 
-    /// Verify that dry-run compound doesn't broadcast transaction
-    #[tokio::test]
-    async fn test_dry_run_compound_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
+        let requests = server
+            .received_requests()
+            .await
+            .expect("mock server records received requests");
 
-    /// Verify that dry-run change commission doesn't broadcast transaction
-    #[tokio::test]
-    async fn test_dry_run_change_commission_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
-
-    /// Verify that dry-run add validator doesn't broadcast transaction
-    #[tokio::test]
-    async fn test_dry_run_add_validator_no_broadcast() {
-        // Dry-run verified: no send_raw_transaction call
-        // This test compiles to verify the dry-run behavior
-    }
-
-    /// Test that all dry-run functions have warning message
-    #[test]
-    fn test_all_dry_runs_have_warning_message() {
-        // All dry-run functions have warning message
-        // This test compiles to verify the warnings exist
-    }
-
-    /// Test dry-run delegate output format
-    #[test]
-    fn test_dry_run_delegate_output_format() {
-        let required_fields = [
-            "Validator ID",
-            "Amount",
-            "From Address",
-            "Calldata",
-            "Transaction hash",
-            "not broadcast",
-        ];
-        assert_eq!(required_fields.len(), 6);
-    }
-
-    /// Test dry-run undelegate output format
-    #[test]
-    fn test_dry_run_undelegate_output_format() {
-        let required_fields = [
-            "Validator ID",
-            "Withdrawal Slot",
-            "Amount",
-            "From Address",
-            "not broadcast",
-        ];
-        assert_eq!(required_fields.len(), 5);
-    }
-
-    /// Test dry-run withdraw output format
-    #[test]
-    fn test_dry_run_withdraw_output_format() {
-        let required_fields = [
-            "Validator ID",
-            "Withdrawal Slot",
-            "From Address",
-            "not broadcast",
-        ];
-        assert_eq!(required_fields.len(), 4);
-    }
-
-    /// Test dry-run claim rewards output format
-    #[test]
-    fn test_dry_run_claim_rewards_output_format() {
-        let required_fields = ["Validator ID", "From Address", "not broadcast"];
-        assert_eq!(required_fields.len(), 3);
-    }
-
-    /// Test dry-run compound output format
-    #[test]
-    fn test_dry_run_compound_output_format() {
-        let required_fields = ["Validator ID", "From Address", "not broadcast"];
-        assert_eq!(required_fields.len(), 3);
-    }
-
-    /// Test dry-run change commission output format
-    #[test]
-    fn test_dry_run_change_commission_output_format() {
-        let required_fields = [
-            "Validator ID",
-            "New Commission",
-            "From Address",
-            "not broadcast",
-        ];
-        assert_eq!(required_fields.len(), 4);
-    }
-
-    /// Test dry-run add validator output format
-    #[test]
-    fn test_dry_run_add_validator_output_format() {
-        let required_fields = vec![
-            "Derived Public Keys",
-            "SECP",
-            "BLS",
-            "Parameters",
-            "Auth Address",
-            "Amount",
-            "Commission",
-            "Signatures",
-            "Transaction",
-            "not broadcast",
-        ];
-        assert_eq!(required_fields.len(), 10);
-    }
-
-    /// Test that dry-run doesn't modify state files
-    #[test]
-    fn test_dry_run_no_state_modification() {
-        // Dry-run doesn't modify .env or config files
-        // This test compiles to verify the dry-run behavior
-    }
-
-    /// Test that dry-run doesn't sign transactions
-    #[test]
-    fn test_dry_run_no_signing() {
-        // Dry-run doesn't sign transactions
-        // This test compiles to verify the dry-run behavior
-    }
-
-    /// Test that dry-run uses correct gas limits
-    #[test]
-    fn test_dry_run_gas_limits() {
-        // Gas limits match STAKING_GAS_LIMIT and ADD_VALIDATOR_GAS_LIMIT
-        // This test compiles to verify the gas limits
-    }
-
-    /// Test that dry-run handles zero amount correctly
-    #[test]
-    fn test_dry_run_zero_amount_handling() {
-        // Zero amount operations handled correctly
-        // This test compiles to verify the behavior
-    }
-
-    /// Test that dry-run handles non-zero amount correctly
-    #[test]
-    fn test_dry_run_nonzero_amount_handling() {
-        // Non-zero amount operations handled correctly
-        // This test compiles to verify the behavior
-    }
-
-    /// Test dry-run commission value calculation
-    #[test]
-    fn test_dry_run_commission_calculation() {
-        let pct = 5.0;
-        let value = (pct * 10_000_000_000_000_000.0) as u64;
-        assert_eq!(value, 50_000_000_000_000_000);
-    }
-
-    /// Test dry-run withdrawal ID range
-    #[test]
-    fn test_dry_run_withdrawal_id_range() {
-        // Withdrawal ID is u64 type (unlimited positive integers)
-        let min_id: u64 = 0;
-        let max_id: u64 = u64::MAX;
-        assert!(min_id <= max_id);
-    }
-
-    /// Count total dry-run tests
-    #[test]
-    fn test_dry_run_test_count() {
-        let test_count = 23;
-        assert!(test_count >= 20);
+        assert!(
+            requests.iter().all(|request| {
+                let body = String::from_utf8_lossy(&request.body);
+                body.contains("eth_chainId") || body.contains("eth_getTransactionCount")
+            }),
+            "dry-run must only read chain id and nonce, got {} request(s)",
+            requests.len()
+        );
+        assert!(
+            !requests.iter().any(|request| {
+                String::from_utf8_lossy(&request.body).contains("eth_sendRawTransaction")
+            }),
+            "dry-run must never call eth_sendRawTransaction"
+        );
     }
 }
