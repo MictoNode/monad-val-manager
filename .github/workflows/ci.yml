@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # alloy-provider pulls reqwest with default features -> native-tls ->
+      # openssl-sys, so pkg-config and the OpenSSL development headers are
+      # required to link.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libssl-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+
+      # Release profile carries lto/codegen-units/panic=abort, so building it
+      # is what proves the shipped artifact compiles.
+      - name: Build (release)
+        run: cargo build --release --locked
+
+      # Hermetic only: unit tests plus the mock-RPC integration target.
+      # tests/testnet_integration_test.rs asserts against the live
+      # testnet-rpc.monad.xyz endpoint and tests/test_prometheus_metrics.rs
+      # needs a local node on :8889, so neither belongs in CI.
+      - name: Test
+        run: cargo test --locked --lib --test integration_test
