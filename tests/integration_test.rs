@@ -244,14 +244,14 @@ fn test_bug_007_transaction_encoding_consistency() {
         signing_encoded[0] >= 0xc0,
         "Signing encoding should be RLP list"
     );
-    // signed_encoded is also RLP payload without type prefix (added by encode_signed_hex)
+    // signed_encoded is the EIP-2718 envelope: type byte || RLP payload
     assert!(
         signed_encoded.len() > 100,
         "Signed encoding should be substantial"
     );
-    assert!(
-        signed_encoded[0] >= 0xc0,
-        "Signed encoding should be RLP list"
+    assert_eq!(
+        signed_encoded[0], 0x02,
+        "Signed encoding should carry the EIP-1559 type prefix"
     );
 
     // The signed version should be longer (includes signature)

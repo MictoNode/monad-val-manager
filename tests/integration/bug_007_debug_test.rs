@@ -64,17 +64,16 @@ fn test_bug_007_complete_transaction_analysis() {
 
     println!("Signed transaction:");
     println!("  Length: {} bytes", signed_tx.len());
-    println!("  First byte (RLP list prefix): 0x{:02x}", signed_tx[0]);
+    println!("  Type prefix: 0x{:02x}", signed_tx[0]);
     println!("  Full hex: 0x{}", hex::encode(&signed_tx));
     println!();
 
     // Verify the transaction structure.
-    // encode_signed returns the RLP payload only; the EIP-2718 type byte is
-    // added by encode_signed_hex, which is what actually goes on the wire.
-    assert!(
-        signed_tx[0] >= 0xc0,
-        "Signed payload must be an RLP list, got 0x{:02x}",
-        signed_tx[0]
+    // encode_signed returns the EIP-2718 envelope (type byte || RLP payload),
+    // which is exactly what goes on the wire.
+    assert_eq!(
+        signed_tx[0], 0x02,
+        "Signed envelope must carry the EIP-1559 type prefix"
     );
     let signed_hex = tx
         .encode_signed_hex(sig.v, &sig.r, &sig.s)

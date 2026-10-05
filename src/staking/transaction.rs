@@ -141,10 +141,11 @@ impl Eip1559Transaction {
         Ok(self)
     }
 
-    /// Encode the unsigned transaction for signing
+    /// Encode the unsigned transaction payload for signing
     ///
-    /// Returns the RLP-encoded transaction without signature
-    /// This is what gets hashed and signed
+    /// Returns the RLP-encoded payload **without** the EIP-2718 type byte or
+    /// signature. `signing_hash` prepends the type byte before hashing, and
+    /// that prefixed form is what actually gets signed.
     pub fn encode_for_signing(&self) -> Vec<u8> {
         // Build the transaction array for signing
         // [chain_id, nonce, max_priority_fee, max_fee, gas_limit, to, value, data, access_list]
@@ -228,15 +229,16 @@ impl Eip1559Transaction {
         stream.append(&r);
         stream.append(&s);
 
-        Ok(stream.out().to_vec())
+        // EIP-2718 envelope: type byte || RLP payload
+        let mut result = vec![EIP1559_TX_TYPE];
+        result.extend_from_slice(&stream.out());
+        Ok(result)
     }
 
-    /// Encode signed transaction as hex string for RPC
+    /// Encode signed transaction as a 0x-prefixed hex string for RPC
     pub fn encode_signed_hex(&self, v: u8, r: &[u8], s: &[u8]) -> Result<String> {
         let raw = self.encode_signed(v, r, s)?;
-        let mut result = vec![EIP1559_TX_TYPE];
-        result.extend_from_slice(&raw);
-        Ok(format!("0x{}", hex::encode(result)))
+        Ok(format!("0x{}", hex::encode(raw)))
     }
 }
 
@@ -352,10 +354,10 @@ mod tests {
         let v = 0u8;
 
         let encoded = tx.encode_signed(v, &r, &s).expect("Valid signature");
-        // encode_signed returns RLP-encoded payload WITHOUT type prefix
-        // The first byte should be the RLP list prefix
+        // encode_signed returns the EIP-2718 envelope: type byte || RLP payload
         assert!(encoded.len() > 100);
-        assert!(encoded[0] >= 0xc0); // RLP list prefix
+        assert_eq!(encoded[0], 0x02, "Should carry the EIP-1559 type prefix");
+        assert!(encoded[1] >= 0xc0, "Payload should be an RLP list");
     }
 
     #[test]
