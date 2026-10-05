@@ -1,80 +1,65 @@
 //! BUG-007 Integration Test - Broadcast Transaction Test
 //!
-//! This test attempts to reproduce the actual BUG-007 error by broadcasting
-//! a transaction to a mock RPC server.
+//! BUG-007: broadcasting a signed EIP-1559 transaction to the node failed with
+//! "Transaction decoding error", while the dry-run encoding looked correct.
+//!
+//! This test pins the RPC contract of the broadcast path against a mock node:
+//!
+//! 1. the payload handed to `eth_sendRawTransaction` must be a signed EIP-1559
+//!    transaction (0x02 type prefix), and
+//! 2. when the node rejects that payload, the node's error must propagate to
+//!    the caller instead of being swallowed.
 
 use monad_val_manager::rpc::RpcClient;
-use monad_val_manager::staking::signer::{LocalSigner, Signer};
-use monad_val_manager::staking::transaction::Eip1559Transaction;
 use monad_val_manager::staking::operations;
+use monad_val_manager::staking::signer::{LocalSigner, Signer};
+
+use wiremock::matchers::{body_string_contains, method};
+use wiremock::{Mock, ResponseTemplate};
+
+use crate::mocks::{json_rpc_error, MockRpcServer};
+
+const TEST_KEY: &str = "0000000000000000000000000000000000000000000000000000000000000001";
+const TESTNET_CHAIN_ID: u64 = 10143;
+const VALIDATOR_ID: u64 = 224;
+const ONE_MON: u128 = 1_000_000_000_000_000_000;
 
 #[tokio::test]
-async fn test_bug_007_broadcast_with_mock_server() {
-    use std::sync::Arc;
+async fn test_bug_007_broadcast_surfaces_node_error() {
+    let mock = MockRpcServer::start().await;
+    mock.mock_chain_id(TESTNET_CHAIN_ID).await;
+    mock.mock_transaction_count(0).await;
 
-    // Start a mock server that simulates Monad testnet
-    let mock_server = MockRpcServer::start().await;
-
-    // Setup mock responses
-    mock_server.mock_chain_id(10143).await; // testnet
-    mock_server.mock_transaction_count(0).await; // nonce
-
-    // Mock eth_sendRawTransaction to return the "decoding error"
-    // This simulates what the real Monad testnet does
-    mock_server
-        .mock_send_raw_transaction_error(
-            -32603,
-            "Transaction decoding error",
+    // Only answer eth_sendRawTransaction when the payload really is a signed
+    // EIP-1559 transaction. If the encoder regresses, this mock stops matching,
+    // the request falls through to a 404 and the assertions below fail.
+    Mock::given(method("POST"))
+        .and(body_string_contains("\"method\":\"eth_sendRawTransaction\""))
+        .and(body_string_contains("\"0x02"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .set_body_string(json_rpc_error(1, -32603, "Transaction decoding error"))
+                .insert_header("Content-Type", "application/json"),
         )
+        .mount(&mock.server)
         .await;
 
-    // Create a test signer
-    let test_key = "0000000000000000000000000000000000000000000000000000000000000001";
-    let signer = Arc::new(LocalSigner::from_private_key(test_key).expect("Valid key"));
-
-    // Create RPC client
-    let rpc_client = RpcClient::new(&mock_server.endpoint()).expect("Failed to create RPC client");
-
-    // Try to perform a delegate operation
-    let result = operations::delegate(
-        &rpc_client,
-        signer.as_ref(),
-        224, // validator_id
-        1_000_000_000_000_000_000, // 1 MON in wei
-    )
-    .await;
-
-    // This should fail with the decoding error
-    assert!(result.is_err(), "Expected error from mock server");
-    let error = result.unwrap_err().to_string();
+    let signer = LocalSigner::from_private_key(TEST_KEY).expect("Valid key");
     assert!(
-        error.contains("decoding error") || error.contains("-32603"),
-        "Expected decoding error, got: {}",
-        error
+        signer.address().starts_with("0x"),
+        "Signer must expose an address"
     );
 
-    println!("BUG-007 reproduced: {}", error);
-}
+    let client = RpcClient::new(&mock.endpoint()).expect("Failed to create RPC client");
+    let result = operations::delegate(&client, &signer, VALIDATOR_ID, ONE_MON).await;
 
-// =============================================================================
-// Mock Server Extension for BUG-007 Testing
-// =============================================================================
-
-struct MockRpcServer {
-    // In a real test, this would be a proper mock server
-    // For now, we'll use a placeholder
-}
-
-impl MockRpcServer {
-    async fn start() -> Self {
-        Self {}
-    }
-
-    async fn mock_chain_id(&self, _chain_id: u64) {}
-    async fn mock_transaction_count(&self, _count: u64) {}
-    async fn mock_send_raw_transaction_error(&self, _code: i32, _message: &str) {}
-
-    fn endpoint(&self) -> String {
-        "http://localhost:9999".to_string()
-    }
+    // The node rejected the broadcast, so the operation must fail with the
+    // node's own error rather than a silent success.
+    let error = result.expect_err("delegate must fail when the node rejects the broadcast");
+    let message = error.to_string();
+    assert!(
+        message.contains("decoding error") || message.contains("-32603"),
+        "node error must propagate to the caller, got: {message} \
+         (or the broadcast payload was not a signed EIP-1559 transaction)"
+    );
 }

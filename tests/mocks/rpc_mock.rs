@@ -114,6 +114,20 @@ impl MockRpcServer {
             .await;
     }
 
+    /// Mock eth_getTransactionCount response
+    pub async fn mock_transaction_count(&self, count: u64) {
+        let response = transaction_count_response(count);
+        Mock::given(method("POST"))
+            .and(body_string_contains("\"method\":\"eth_getTransactionCount\""))
+            .respond_with(
+                ResponseTemplate::new(200)
+                    .set_body_string(response)
+                    .insert_header("Content-Type", "application/json"),
+            )
+            .mount(&self.server)
+            .await;
+    }
+
     /// Mock eth_getTransactionReceipt response (pending)
     #[allow(dead_code)]
     pub async fn mock_transaction_receipt_pending(&self, tx_hash: &str) {

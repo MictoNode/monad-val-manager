@@ -40,9 +40,9 @@ jobs:
       - name: Build (release)
         run: cargo build --release --locked
 
-      # Hermetic only: unit tests plus the mock-RPC integration target.
+      # Hermetic only: unit tests plus the mock-RPC integration targets.
       # tests/testnet_integration_test.rs asserts against the live
       # testnet-rpc.monad.xyz endpoint and tests/test_prometheus_metrics.rs
       # needs a local node on :8889, so neither belongs in CI.
       - name: Test
-        run: cargo test --locked --lib --test integration_test
+        run: cargo test --locked --lib --test integration_test --test unit_test

@@ -244,7 +244,10 @@ impl Eip1559Transaction {
 ///
 /// RLP encodes integers as compact byte arrays without leading zeros.
 /// For zero, returns a single zero byte.
-fn encode_u128_variable_length(value: u128) -> Vec<u8> {
+///
+/// Public so integration tests can pin the variable-length encoding that
+/// BUG-007 (broadcast rejected with "Transaction decoding error") hinged on.
+pub fn encode_u128_variable_length(value: u128) -> Vec<u8> {
     if value == 0 {
         return vec![0u8];
     }

@@ -35,7 +35,7 @@ fn test_bug_007_complete_transaction_analysis() {
     let tx = Eip1559Transaction::new(chain_id)
         .with_nonce(nonce)
         .with_gas(1_000_000, 500_000_000_000, 1_000_000_000)
-        .to("0x0000000000000000000000000000000001000")
+        .to("0x0000000000000000000000000000000000001000")
         .expect("Valid address")
         .with_value(0)
         .with_data_hex(&format!("0x{}", calldata))
@@ -105,7 +105,7 @@ fn test_bug_007_compare_with_reference() {
     // Verify our implementation matches
     let tx = Eip1559Transaction::new(10143)
         .with_nonce(0)
-        .to("0x0000000000000000000000000000000001000")
+        .to("0x0000000000000000000000000000000000001000")
         .expect("Valid address")
         .with_value(0);
 

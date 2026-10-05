@@ -104,6 +104,11 @@ pub fn gas_price_response(price: u64) -> String {
     json_rpc_success(1, format!("0x{:x}", price))
 }
 
+/// Create eth_getTransactionCount response
+pub fn transaction_count_response(count: u64) -> String {
+    json_rpc_success(1, format!("0x{:x}", count))
+}
+
 /// Create eth_getTransactionReceipt response (pending/null)
 #[allow(dead_code)]
 pub fn transaction_receipt_pending() -> String {
