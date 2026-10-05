@@ -1,0 +1,27 @@
+# Rust
+/target
+**/*.rs.bk
+*.pdb
+
+# Private key / secrets
+# init writes ~/.config/monad-val-manager/.env (outside the repo), but never
+# allow a repo-local one to be committed.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+keystore/
+secrets/
+
+# Logs
+*.log
+logs/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
