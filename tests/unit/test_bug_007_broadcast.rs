@@ -38,9 +38,28 @@ fn test_transaction_encoding_consistency() {
     println!("Signed encoded (first 100 bytes): {:?}", &signed_encoded[..100.min(signed_encoded.len())]);
     println!();
 
-    // Both should start with 0x02 (EIP-1559 type)
-    assert_eq!(signing_encoded[0], 0x02, "Signing encoding should start with 0x02");
-    assert_eq!(signed_encoded[0], 0x02, "Signed encoding should start with 0x02");
+    // encode_for_signing/encode_signed return the RLP payloads only; the
+    // EIP-2718 type byte is added by signing_hash (before hashing) and by
+    // encode_signed_hex (what actually goes on the wire).
+    assert!(
+        signing_encoded[0] >= 0xc0,
+        "Signing encoding should be an RLP list, got 0x{:02x}",
+        signing_encoded[0]
+    );
+    assert!(
+        signed_encoded[0] >= 0xc0,
+        "Signed encoding should be an RLP list, got 0x{:02x}",
+        signed_encoded[0]
+    );
+
+    // The wire format must carry the EIP-1559 type prefix.
+    let broadcast_hex = tx
+        .encode_signed_hex(signature.v, &signature.r, &signature.s)
+        .expect("Valid encoding");
+    assert!(
+        broadcast_hex.starts_with("0x02"),
+        "Broadcast payload must carry the EIP-1559 type prefix, got: {broadcast_hex}"
+    );
 
     // The signed version should be longer (includes signature)
     assert!(signed_encoded.len() > signing_encoded.len(), "Signed tx should be longer");

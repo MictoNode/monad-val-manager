@@ -24,7 +24,7 @@ fn test_bug_007_complete_transaction_analysis() {
     // Build the calldata for change-commission
     let calldata = format!(
         "{:08x}{:064x}{:064x}",
-        0xb6a1b3b0, // changeCommission(uint64,uint256) selector
+        0xb6a1b3b0u32, // changeCommission(uint64,uint256) selector
         validator_id,
         commission_value
     );
@@ -64,17 +64,25 @@ fn test_bug_007_complete_transaction_analysis() {
 
     println!("Signed transaction:");
     println!("  Length: {} bytes", signed_tx.len());
-    println!("  Type prefix: 0x{:02x}", signed_tx[0]);
+    println!("  First byte (RLP list prefix): 0x{:02x}", signed_tx[0]);
     println!("  Full hex: 0x{}", hex::encode(&signed_tx));
     println!();
 
-    // Parse the RLP to verify structure
-    // Strip 0x02 prefix
-    let rlp_bytes = &signed_tx[1..];
-    println!("RLP payload length: {} bytes", rlp_bytes.len());
-
-    // Verify the transaction structure
-    assert_eq!(signed_tx[0], 0x02, "Should be EIP-1559 type");
+    // Verify the transaction structure.
+    // encode_signed returns the RLP payload only; the EIP-2718 type byte is
+    // added by encode_signed_hex, which is what actually goes on the wire.
+    assert!(
+        signed_tx[0] >= 0xc0,
+        "Signed payload must be an RLP list, got 0x{:02x}",
+        signed_tx[0]
+    );
+    let signed_hex = tx
+        .encode_signed_hex(sig.v, &sig.r, &sig.s)
+        .expect("Valid encoding");
+    assert!(
+        signed_hex.starts_with("0x02"),
+        "Broadcast payload must carry the EIP-1559 type prefix, got: {signed_hex}"
+    );
     assert_eq!(sig.v, 0, "v should be 0 or 1 (y-parity)");
 
     println!();
@@ -110,7 +118,14 @@ fn test_bug_007_compare_with_reference() {
         .with_value(0);
 
     let encoded = tx.encode_for_signing();
-    assert_eq!(encoded[0], 0x02);
-    println!("✓ Transaction type prefix is correct (0x02)");
+    // encode_for_signing returns the RLP payload without the EIP-2718 type
+    // byte; signing_hash() prepends 0x02 before hashing.
+    assert!(
+        encoded[0] >= 0xc0,
+        "Signing payload must be an RLP list, got 0x{:02x}",
+        encoded[0]
+    );
+    assert_eq!(tx.signing_hash().len(), 32);
+    println!("✓ Signing payload is an RLP list (the 0x02 type byte is added by signing_hash)");
     println!("✓ Chain ID is correct (10143 for testnet)");
 }
