@@ -1,0 +1,93 @@
+name: Release
+
+# Publishing a release attaches the binary automatically, so the asset no
+# longer has to be uploaded by hand.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build and attach the binary to (e.g. v1.0.2)"
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-attach:
+    name: Build & attach binary
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          fi
+          if [ -z "$TAG" ]; then
+            echo "::error::could not resolve a tag to release"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      # alloy-provider pulls reqwest with default features -> native-tls ->
+      # openssl-sys, so pkg-config and the OpenSSL development headers are
+      # required to link.
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libssl-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and target
+        uses: Swatinem/rust-cache@v2
+
+      # A release must not ship a binary built from a failing commit.
+      - name: Test
+        run: cargo test --locked --lib --test integration_test --test unit_test
+
+      - name: Build release binary
+        run: cargo build --release --locked
+
+      # Guards against the v1.0.1 defect: a release whose binary still reports
+      # the previous version, because Cargo.toml was never bumped.
+      - name: Assert the binary reports the tag's version
+        run: |
+          EXPECTED="${{ steps.tag.outputs.tag }}"
+          EXPECTED="${EXPECTED#v}"
+          ACTUAL="$(./target/release/monad-val-manager --version | awk '{print $NF}')"
+          echo "tag=${{ steps.tag.outputs.tag }} binary=$ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::binary reports $ACTUAL but the tag is ${{ steps.tag.outputs.tag }} — bump Cargo.toml before releasing"
+            exit 1
+          fi
+
+      # README tells users to compare sha256sum output with the release page,
+      # so the checksum has to actually be published.
+      - name: Package binary and checksum
+        run: |
+          cp target/release/monad-val-manager monad-val-manager
+          sha256sum monad-val-manager > monad-val-manager.sha256
+          cat monad-val-manager.sha256
+          ls -l monad-val-manager
+
+      - name: Attach to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ steps.tag.outputs.tag }}" \
+            monad-val-manager monad-val-manager.sha256 --clobber
