@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-11-27
+
+### Security
+- Refreshed the dependency lockfile: 280 crates updated within their existing
+  semver constraints, clearing 17 RustSec/OSV advisories. Affected paths included
+  TLS and HTTP (`rustls` 0.23.46, `rustls-webpki` 0.103.17, `quinn-proto` 0.11.19,
+  `h2` 0.4.21, `openssl` 0.10.82), URL parsing (`url` 2.5.9), runtime
+  (`tokio` 1.54.1) and error handling (`anyhow` 1.0.105).
+- `ratatui-textarea` is pinned to `0.9` instead of `*`; a wildcard let a lockfile
+  refresh move it from 0.8 to 0.9 without a manifest change.
+
+### Changed
+- Remaining advisories are structural and need an `alloy` 0.6 → 2.x migration:
+  `crypto-bigint` 0.5.5 (timing variability, via `elliptic-curve`), `lru` 0.12.5
+  (via `alloy-provider` and old `ratatui` releases).
+
 ## [1.0.2] - 2026-10-05
 
 ### Fixed
