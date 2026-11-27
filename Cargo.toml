@@ -99,7 +99,7 @@ colored = "2.1"
 arboard = "3.0"
 
 # Textarea widget for TUI input fields (ratatui-native fork for 0.30 compatibility)
-ratatui-textarea = "*"
+ratatui-textarea = "0.9"
 
 # Progress bars and spinners
 indicatif = "0.17"
